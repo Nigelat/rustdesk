@@ -5848,17 +5848,7 @@ impl Connection {
     }
 
     fn get_auto_disconenct_timer() -> Option<(Instant, u64)> {
-        if Config::get_option("allow-auto-disconnect") == "Y" {
-            let mut minute: u64 = Config::get_option("auto-disconnect-timeout")
-                .parse()
-                .unwrap_or(10);
-            if minute == 0 {
-                minute = 10;
-            }
-            Some((Instant::now(), minute))
-        } else {
-            None
-        }
+        None
     }
 
     fn update_auto_disconnect_timer(&mut self) {
