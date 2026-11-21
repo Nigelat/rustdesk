@@ -1,6 +1,8 @@
 name: Windows test build (x64)
 
 on:
+  push:
+    branches: [welcome-electra]
   workflow_dispatch:
     inputs:
       upload-artifact:
