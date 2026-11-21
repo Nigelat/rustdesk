@@ -92,7 +92,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       Padding(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Text(
-          'Hi, Electra, are you ready for the show?',
+          'Hi, ZJ Elektra, are you ready for the show?',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
