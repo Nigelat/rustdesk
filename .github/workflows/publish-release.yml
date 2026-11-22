@@ -1,0 +1,74 @@
+name: Publish release
+
+on:
+  push:
+    branches: [release-publish]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      TAG: zj-elektra-v1
+      BUILD_SHA: 9f88886d5a72e96d7915726da01ade658549027d
+    steps:
+      - name: Download the finished builds
+        run: |
+          mkdir -p dl/win dl/intel dl/arm out
+          gh run download 44950621126 --repo "$REPO" -n rustdesk-single-exe-windows-x86_64 -D dl/win
+          gh run download 44950621175 --repo "$REPO" -n rustdesk-unsigned-macos-x86_64 -D dl/intel
+          gh run download 44950621175 --repo "$REPO" -n rustdesk-unsigned-macos-aarch64 -D dl/arm
+          cp dl/win/*.exe out/RustDesk-Windows.exe
+          cp dl/intel/*.dmg out/RustDesk-Mac-Intel.dmg
+          cp dl/arm/*.dmg out/RustDesk-Mac-AppleSilicon.dmg
+          ls -la out
+
+      - name: Make checksums and release notes
+        run: |
+          cd out
+          sha256sum RustDesk-Windows.exe RustDesk-Mac-Intel.dmg RustDesk-Mac-AppleSilicon.dmg > SHA256SUMS.txt
+          cd ..
+          {
+            cat <<'NOTES'
+          ## Setup guide for ZJ Elektra
+
+          Download the file for your computer from **Assets** below.
+
+          ### Windows
+          1. Download **RustDesk-Windows.exe**. If your browser says it can't be downloaded safely, choose **Keep**.
+          2. Double-click it. If a blue "Windows protected your PC" screen appears, click **More info**, then **Run anyway**.
+          3. Wait a few seconds the first time while it opens.
+          4. You'll see "Hi, ZJ Elektra, are you ready for the show?" with your ID and password on the left.
+
+          ### Mac
+          1. Pick your file: Apple menu, then **About This Mac**. If it says "Chip: Apple M...", download **RustDesk-Mac-AppleSilicon.dmg**. If it says "Processor: Intel", download **RustDesk-Mac-Intel.dmg**.
+          2. Open the .dmg and drag **RustDesk** into **Applications**.
+          3. Open Applications, **right-click RustDesk**, choose **Open**, then **Open** again. If it is still blocked, go to **System Settings, Privacy & Security**, scroll down and click **Open Anyway**.
+          4. To let me see and control the screen, turn on RustDesk under **Privacy & Security, Screen Recording** and **Accessibility**, then reopen the app. Menu names can differ slightly between macOS versions.
+
+          ### Staying safe
+          - These files are made by Nigel and are not signed by Apple or Microsoft, which is why the warnings appear.
+          - Only give your ID and password to people you know and expect to hear from. Close the app when you're done.
+
+          ### Check your download (optional)
+          The fingerprints below should match the file you downloaded. On Windows, run `certutil -hashfile RustDesk-Windows.exe SHA256` in Command Prompt. On Mac, run `shasum -a 256 <file>` in Terminal.
+
+          ```
+          NOTES
+            cat out/SHA256SUMS.txt
+            echo '```'
+          } > notes.md
+          cat notes.md
+
+      - name: Create the release
+        run: |
+          gh release create "$TAG" out/RustDesk-Windows.exe out/RustDesk-Mac-Intel.dmg out/RustDesk-Mac-AppleSilicon.dmg out/SHA256SUMS.txt \
+            --repo "$REPO" \
+            --target "$BUILD_SHA" \
+            --title "RustDesk for ZJ Elektra" \
+            --notes-file notes.md
